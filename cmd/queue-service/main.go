@@ -45,15 +45,15 @@ func main() {
 	})
 	if err != nil {
 		slog.Error("failed to init broker", "err", err)
-        return
+		return
 	}
 
-    repo, err := repo.New(repo.RepoConfig{
-        PostgresUrl: config.PostgresUrl,
-    })
+	repo, err := repo.New(repo.RepoConfig{
+		PostgresUrl: config.PostgresUrl,
+	})
 	if err != nil {
 		slog.Error("failed to init repo", "err", err)
-        return
+		return
 	}
 
 	handler := handler.New(broker, repo)

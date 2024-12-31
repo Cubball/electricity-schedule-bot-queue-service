@@ -188,7 +188,7 @@ func handleMessage(msg amqp.Delivery, subscriber func(context.Context, []byte) e
 	}
 
 	ctx = context.WithValue(ctx, logger.TraceIdContextKey, traceId)
-    slog.DebugContext(ctx, "received a message", "content", string(msg.Body))
+	slog.DebugContext(ctx, "received a message", "content", string(msg.Body))
 	err := subscriber(ctx, msg.Body)
 	if err != nil {
 		slog.ErrorContext(ctx, "failed to process a message", "err", err)

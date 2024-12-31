@@ -42,5 +42,5 @@ func (r *Runner) Stop() {
 	r.stopChannel <- true
 	close(r.stopChannel)
 	r.broker.Close()
-    r.repo.Close()
+	r.repo.Close()
 }

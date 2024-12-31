@@ -56,12 +56,12 @@ func (h *Handler) Handle(ctx context.Context, body []byte) error {
 		return fmt.Errorf("failed to publish a message: %w", err)
 	}
 
-	err = h.repo.UpdateAllQueues(updatedQueues)
+	err = h.repo.UpdateAllQueues(ctx, schedule.Queues)
 	if err != nil {
 		return fmt.Errorf("failed to update the queues: %w", err)
 	}
 
-    slog.DebugContext(ctx, "updated queues in the db")
+	slog.DebugContext(ctx, "updated queues in the db")
 	return nil
 }
 

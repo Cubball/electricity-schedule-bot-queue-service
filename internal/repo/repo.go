@@ -31,7 +31,36 @@ func New(config RepoConfig) (*Repo, error) {
 	}, nil
 }
 
-func (r *Repo) UpdateAllQueues(queues []models.Queue) error {
+func (r *Repo) UpdateAllQueues(ctx context.Context, queues []models.Queue) error {
+	transaction, err := r.db.Begin(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to begin a transaction: %w", err)
+	}
+
+	defer transaction.Rollback(ctx)
+	deleteQuery := "DELETE FROM disconnection_times;"
+	_, err = transaction.Exec(ctx, deleteQuery)
+	if err != nil {
+		return fmt.Errorf("failed to execute DELETE within a transaction: %w", err)
+	}
+
+	for _, queue := range queues {
+		for _, time := range queue.DisconnectionTimes {
+			_, err = transaction.Exec(ctx, `
+                INSERT INTO disconnection_times (queue_number, start_time, end_time)
+                VALUES ($1, $2, $3);
+            `, queue.Number, time.Start, time.End)
+			if err != nil {
+				return fmt.Errorf("failed to execute INSERT within a transaction: %w", err)
+			}
+		}
+	}
+
+	err = transaction.Commit(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to commit a transaction: %w", err)
+	}
+
 	return nil
 }
 
@@ -75,10 +104,10 @@ func (r *Repo) GetAllQueues(ctx context.Context) ([]models.Queue, error) {
 		}
 	}
 
-    queues := []models.Queue{}
-    for _, v := range queueMap {
-        queues = append(queues, *v)
-    }
+	queues := []models.Queue{}
+	for _, v := range queueMap {
+		queues = append(queues, *v)
+	}
 
 	return queues, nil
 }
