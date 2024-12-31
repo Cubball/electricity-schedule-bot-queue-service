@@ -7,8 +7,9 @@ import (
 )
 
 const (
-	defaultRabbitMqUrl            = "amqp://guest:guest@localhost:5672"
 	defaultIsProduction           = "false"
+	defaultPostgresUrl            = "postgresql://postgres:postgres@localhost:5432/queue_db"
+	defaultRabbitMqUrl            = "amqp://guest:guest@localhost:5672"
 	defaultSubscriberExchangeName = "schedule.topic"
 	defaultSubscriberBindingKey   = "schedule.parsed"
 	defaultSubscriberQueueName    = "queue.service"
@@ -18,6 +19,7 @@ const (
 
 type Config struct {
 	IsProduction           bool
+	PostgresUrl            string
 	RabbitMqUrl            string
 	PublisherRoutingKey    string
 	PublisherExchangeName  string
@@ -35,6 +37,7 @@ func Load() (*Config, error) {
 
 	return &Config{
 		IsProduction:           isProduction,
+		PostgresUrl:            getEnvOrDefault("POSTGRES_URL", defaultRabbitMqUrl),
 		RabbitMqUrl:            getEnvOrDefault("RABBITMQ_URL", defaultRabbitMqUrl),
 		PublisherRoutingKey:    getEnvOrDefault("PUBLISHER_ROUTING_KEY", defaultPublisherRoutingKey),
 		PublisherExchangeName:  getEnvOrDefault("PUBLISHER_EXCHANGE_NAME", defaultPublisherExchangeName),

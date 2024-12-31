@@ -5,6 +5,7 @@ import (
 	"electricity-schedule-bot/queue-service/internal/config"
 	"electricity-schedule-bot/queue-service/internal/handler"
 	"electricity-schedule-bot/queue-service/internal/logger"
+	"electricity-schedule-bot/queue-service/internal/repo"
 	"electricity-schedule-bot/queue-service/internal/runner"
 	"log/slog"
 	"os"
@@ -46,7 +47,14 @@ func main() {
 		slog.Error("failed to init broker", "err", err)
 	}
 
-	handler := handler.New(broker, nil)
+    repo, err := repo.New(repo.RepoConfig{
+        PostgresUrl: config.PostgresUrl,
+    })
+	if err != nil {
+		slog.Error("failed to init repo", "err", err)
+	}
+
+	handler := handler.New(broker, repo)
 	runner := runner.New(handler, broker)
 	err = runner.Run()
 	if err != nil {
