@@ -3,6 +3,7 @@ package runner
 import (
 	"electricity-schedule-bot/queue-service/internal/broker"
 	"electricity-schedule-bot/queue-service/internal/handler"
+	"electricity-schedule-bot/queue-service/internal/repo"
 	"fmt"
 	"log/slog"
 )
@@ -10,13 +11,15 @@ import (
 type Runner struct {
 	handler     *handler.Handler
 	broker      *broker.Broker
+	repo        *repo.Repo
 	stopChannel chan bool
 }
 
-func New(handler *handler.Handler, broker *broker.Broker) *Runner {
+func New(handler *handler.Handler, broker *broker.Broker, repo *repo.Repo) *Runner {
 	return &Runner{
 		handler:     handler,
 		broker:      broker,
+		repo:        repo,
 		stopChannel: make(chan bool),
 	}
 }
@@ -39,4 +42,5 @@ func (r *Runner) Stop() {
 	r.stopChannel <- true
 	close(r.stopChannel)
 	r.broker.Close()
+    r.repo.Close()
 }

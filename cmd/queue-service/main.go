@@ -45,6 +45,7 @@ func main() {
 	})
 	if err != nil {
 		slog.Error("failed to init broker", "err", err)
+        return
 	}
 
     repo, err := repo.New(repo.RepoConfig{
@@ -52,10 +53,11 @@ func main() {
     })
 	if err != nil {
 		slog.Error("failed to init repo", "err", err)
+        return
 	}
 
 	handler := handler.New(broker, repo)
-	runner := runner.New(handler, broker)
+	runner := runner.New(handler, broker, repo)
 	err = runner.Run()
 	if err != nil {
 		slog.Error("failed to run the runner", "err", err)

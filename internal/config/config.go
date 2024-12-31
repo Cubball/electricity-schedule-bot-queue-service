@@ -37,7 +37,7 @@ func Load() (*Config, error) {
 
 	return &Config{
 		IsProduction:           isProduction,
-		PostgresUrl:            getEnvOrDefault("POSTGRES_URL", defaultRabbitMqUrl),
+		PostgresUrl:            getEnvOrDefault("POSTGRES_URL", defaultPostgresUrl),
 		RabbitMqUrl:            getEnvOrDefault("RABBITMQ_URL", defaultRabbitMqUrl),
 		PublisherRoutingKey:    getEnvOrDefault("PUBLISHER_ROUTING_KEY", defaultPublisherRoutingKey),
 		PublisherExchangeName:  getEnvOrDefault("PUBLISHER_EXCHANGE_NAME", defaultPublisherExchangeName),

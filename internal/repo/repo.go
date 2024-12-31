@@ -4,6 +4,8 @@ import (
 	"context"
 	"electricity-schedule-bot/queue-service/internal/models"
 	"fmt"
+	"strings"
+	"time"
 
 	"github.com/jackc/pgx/v5"
 )
@@ -29,10 +31,58 @@ func New(config RepoConfig) (*Repo, error) {
 	}, nil
 }
 
-func (r *Repo) GetAllQueues() ([]models.Queue, error) {
-	return nil, nil
+func (r *Repo) UpdateAllQueues(queues []models.Queue) error {
+	return nil
 }
 
-func (r *Repo) UpdateAllQueues(queues []models.Queue) error {
-    return nil
+func (r *Repo) GetAllQueues(ctx context.Context) ([]models.Queue, error) {
+	query := `
+        SELECT q.number, dt.start_time, dt.end_time
+        FROM queues AS q
+        LEFT JOIN disconnection_times AS dt
+        ON q.number = dt.queue_number;
+    `
+	rows, err := r.db.Query(ctx, query)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch the queues from db: %w", err)
+	}
+
+	defer rows.Close()
+	queueMap := map[string]*models.Queue{}
+	for rows.Next() {
+		var queueNumber string
+		var start *time.Time
+		var end *time.Time
+		err = rows.Scan(&queueNumber, &start, &end)
+		if err != nil {
+			return nil, fmt.Errorf("failed to read the record from db: %w", err)
+		}
+
+		queue, ok := queueMap[queueNumber]
+		if !ok {
+			queue = &models.Queue{
+				Number:             strings.TrimSpace(queueNumber),
+				DisconnectionTimes: []models.DisconnectionTime{},
+			}
+			queueMap[queueNumber] = queue
+		}
+
+		if start != nil && end != nil {
+			queue.DisconnectionTimes = append(queue.DisconnectionTimes, models.DisconnectionTime{
+				Start: *start,
+				End:   *end,
+			})
+		}
+	}
+
+    queues := []models.Queue{}
+    for _, v := range queueMap {
+        queues = append(queues, *v)
+    }
+
+	return queues, nil
+}
+
+func (r *Repo) Close() {
+	r.db.Close(context.Background())
 }
