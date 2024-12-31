@@ -38,9 +38,9 @@ func Load() (*Config, error) {
 		RabbitMqUrl:            getEnvOrDefault("RABBITMQ_URL", defaultRabbitMqUrl),
 		PublisherRoutingKey:    getEnvOrDefault("PUBLISHER_ROUTING_KEY", defaultPublisherRoutingKey),
 		PublisherExchangeName:  getEnvOrDefault("PUBLISHER_EXCHANGE_NAME", defaultPublisherExchangeName),
-		SubscriberQueueName:    getEnvOrDefault("SUBSCRIBER_QUEUE_NAME", defaultPublisherExchangeName),
-		SubscriberBindingKey:   getEnvOrDefault("SUBSCRIBER_BINDING_KEY", defaultPublisherRoutingKey),
-		SubscriberExchangeName: getEnvOrDefault("SUBSCRIBER_EXCHANGE_NAME", defaultPublisherExchangeName),
+		SubscriberQueueName:    getEnvOrDefault("SUBSCRIBER_QUEUE_NAME", defaultSubscriberQueueName),
+		SubscriberBindingKey:   getEnvOrDefault("SUBSCRIBER_BINDING_KEY", defaultSubscriberBindingKey),
+		SubscriberExchangeName: getEnvOrDefault("SUBSCRIBER_EXCHANGE_NAME", defaultSubscriberExchangeName),
 	}, nil
 }
 

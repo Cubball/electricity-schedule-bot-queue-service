@@ -102,11 +102,11 @@ func (p *Broker) RegisterSubscriber(subscriber func(context.Context, string) err
 
 			<-p.reconnectChannel
 			msgChannel, err = p.channel.Consume(p.config.Subscriber.QueueName, "", true, false, false, false, nil)
-            if err != nil {
-                // TODO: handle this better
-                slog.Error("failed to reregister subscriber", "err", err)
-                break
-            }
+			if err != nil {
+				// TODO: handle this better
+				slog.Error("failed to reregister subscriber", "err", err)
+				break
+			}
 		}
 	}()
 
