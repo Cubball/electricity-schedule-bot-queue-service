@@ -46,13 +46,13 @@ func main() {
 		slog.Error("failed to init broker", "err", err)
 	}
 
-	handler := handler.New(broker)
+	handler := handler.New(broker, nil)
 	runner := runner.New(handler, broker)
 	err = runner.Run()
 	if err != nil {
 		slog.Error("failed to run the runner", "err", err)
-        return
+		return
 	}
 
-    runner.Wait()
+	runner.Wait()
 }
