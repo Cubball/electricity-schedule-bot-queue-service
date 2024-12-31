@@ -4,10 +4,16 @@ import (
 	"context"
 	"electricity-schedule-bot/queue-service/internal/models"
 	"fmt"
+	"log/slog"
 	"strings"
 	"time"
 
 	"github.com/jackc/pgx/v5"
+)
+
+const (
+	maxAttempts         = 5
+	initialWaitDuration = time.Second
 )
 
 type RepoConfig struct {
@@ -25,6 +31,7 @@ func New(config RepoConfig) (*Repo, error) {
 		return nil, fmt.Errorf("failed to connect to pg: %w", err)
 	}
 
+	slog.Info("connected to postgres")
 	return &Repo{
 		postgresUrl: config.PostgresUrl,
 		db:          db,
@@ -32,6 +39,11 @@ func New(config RepoConfig) (*Repo, error) {
 }
 
 func (r *Repo) UpdateAllQueues(ctx context.Context, queues []models.Queue) error {
+	err := r.reconnectIfDisconnected(ctx)
+	if err != nil {
+		return err
+	}
+
 	transaction, err := r.db.Begin(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to begin a transaction: %w", err)
@@ -65,6 +77,11 @@ func (r *Repo) UpdateAllQueues(ctx context.Context, queues []models.Queue) error
 }
 
 func (r *Repo) GetAllQueues(ctx context.Context) ([]models.Queue, error) {
+	err := r.reconnectIfDisconnected(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	query := `
         SELECT q.number, dt.start_time, dt.end_time
         FROM queues AS q
@@ -114,4 +131,33 @@ func (r *Repo) GetAllQueues(ctx context.Context) ([]models.Queue, error) {
 
 func (r *Repo) Close() {
 	r.db.Close(context.Background())
+}
+
+func (r *Repo) reconnectIfDisconnected(ctx context.Context) error {
+	if !r.db.IsClosed() {
+		return nil
+	}
+
+	slog.WarnContext(ctx, "disconnected from postgres")
+	waitDuration := initialWaitDuration
+	for i := 0; i < maxAttempts; i++ {
+		slog.DebugContext(ctx, "attempting to reconnect to postgres", "attempt", i+1)
+		db, err := pgx.Connect(ctx, r.postgresUrl)
+		if err == nil {
+			r.db = db
+			slog.InfoContext(ctx, "reconnected to postgres")
+			return nil
+		}
+
+		slog.WarnContext(ctx, "failed to reconnect to postgres", "attempt", i+1)
+		// don't sleep after the last attempt
+		if i+1 >= maxAttempts {
+			break
+		}
+
+		time.Sleep(waitDuration)
+		waitDuration *= 2
+	}
+
+	return fmt.Errorf("failed to reconnect to postgres after %d attempts", maxAttempts)
 }

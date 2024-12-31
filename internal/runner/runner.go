@@ -43,4 +43,5 @@ func (r *Runner) Stop() {
 	close(r.stopChannel)
 	r.broker.Close()
 	r.repo.Close()
+    slog.Info("the runner has stopped")
 }

@@ -35,19 +35,24 @@ func (h *Handler) Handle(ctx context.Context, body []byte) error {
 		return fmt.Errorf("failed to unmarshal the message: %w", err)
 	}
 
-	slog.DebugContext(ctx, "got queues from the schedule", "queuesCount", len(schedule.Queues), "fetchTime", schedule.FetchTime)
+	slog.DebugContext(ctx, "got queues from the schedule", "fetchTime", schedule.FetchTime)
 	queues, err := h.repo.GetAllQueues(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to fetch the queues from the db: %w", err)
 	}
 
-	slog.DebugContext(ctx, "fetched queues from the db", "queuesCount", len(queues))
+	slog.DebugContext(ctx, "fetched queues from the db")
 	updatedQueues, err := getUpdatedQueues(queues, schedule.Queues, schedule.FetchTime)
 	if err != nil {
 		return fmt.Errorf("failed to determine the updated queues: %w", err)
 	}
 
 	slog.DebugContext(ctx, "got updated queues", "queuesCount", len(queues))
+	if len(updatedQueues) == 0 {
+		slog.DebugContext(ctx, "returning early, no queues updated")
+		return nil
+	}
+
 	err = h.broker.Publish(ctx, models.ScheduleUpdate{
 		FetchTime:     schedule.FetchTime,
 		UpdatedQueues: updatedQueues,
