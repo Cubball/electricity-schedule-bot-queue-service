@@ -3,31 +3,42 @@ package main
 import (
 	"context"
 	"electricity-schedule-bot/queue-service/internal/broker"
+	"electricity-schedule-bot/queue-service/internal/config"
 	"electricity-schedule-bot/queue-service/internal/logger"
 	"log/slog"
 	"os"
 )
 
 func main() {
+	config, err := config.Load()
+	if err != nil {
+		slog.Error("failed to load config", "err", err)
+		return
+	}
+
 	var handler slog.Handler
-	handler = logger.NewTraceIdHandler(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
-		Level: slog.LevelDebug,
-	}))
+	if config.IsProduction {
+		handler = logger.NewTraceIdHandler(slog.NewJSONHandler(os.Stdout, nil))
+	} else {
+		handler = logger.NewTraceIdHandler(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+			Level: slog.LevelDebug,
+		}))
+	}
 
 	logger := slog.New(handler)
 	logger = logger.With("service", "queue-service")
 	slog.SetDefault(logger)
 
 	broker, err := broker.New(broker.BrokerConfig{
-		RabbitMQUrl: "amqp://guest:guest@localhost:5672",
+		RabbitMQUrl: config.RabbitMqUrl,
 		Publisher: broker.PublisherConfig{
-			ExchangeName: "updates.topic",
-			RoutingKey:   "updates.full",
+			ExchangeName: config.PublisherExchangeName,
+			RoutingKey:   config.PublisherRoutingKey,
 		},
 		Subscriber: broker.SubscriberConfig{
-			ExchangeName: "schedule.topic",
-			BindingKey:   "schedule.parsed",
-			QueueName:    "queue.service",
+			ExchangeName: config.SubscriberExchangeName,
+			BindingKey:   config.SubscriberBindingKey,
+			QueueName:    config.SubscriberQueueName,
 		},
 	})
 	if err != nil {
