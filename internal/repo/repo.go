@@ -2,6 +2,7 @@ package repo
 
 import (
 	"context"
+	"electricity-schedule-bot/queue-service/internal/models"
 	"fmt"
 
 	"github.com/jackc/pgx/v5"
@@ -26,4 +27,12 @@ func New(config RepoConfig) (*Repo, error) {
 		postgresUrl: config.PostgresUrl,
 		db:          db,
 	}, nil
+}
+
+func (r *Repo) GetAllQueues() ([]models.Queue, error) {
+	return nil, nil
+}
+
+func (r *Repo) UpdateAllQueues(queues []models.Queue) error {
+    return nil
 }

@@ -86,7 +86,7 @@ func (p *Broker) Publish(ctx context.Context, obj any) error {
 	return nil
 }
 
-func (p *Broker) RegisterSubscriber(subscriber func(context.Context, string) error) error {
+func (p *Broker) RegisterSubscriber(subscriber func(context.Context, []byte) error) error {
 	// doing autoAck for now for simplicity
 	msgChannel, err := p.channel.Consume(p.config.Subscriber.QueueName, "", true, false, false, false, nil)
 	if err != nil {
@@ -179,8 +179,7 @@ func (p *Broker) handleReconnect() {
 	}()
 }
 
-func handleMessage(msg amqp.Delivery, subscriber func(context.Context, string) error) {
-	body := string(msg.Body)
+func handleMessage(msg amqp.Delivery, subscriber func(context.Context, []byte) error) {
 	traceId, ok := msg.Headers[traceIdHeaderName].(string)
 	ctx := context.Background()
 	if !ok {
@@ -189,7 +188,7 @@ func handleMessage(msg amqp.Delivery, subscriber func(context.Context, string) e
 	}
 
 	ctx = context.WithValue(ctx, logger.TraceIdContextKey, traceId)
-	err := subscriber(ctx, body)
+	err := subscriber(ctx, msg.Body)
 	if err != nil {
 		slog.ErrorContext(ctx, "failed to process a message", "err", err)
 	}
